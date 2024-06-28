@@ -9,7 +9,7 @@ in Markdown format.
 **Note**: You need to have Deno installed
 
 ```bash
-deno run https://raw.githubusercontent.com/ivteplo/deno-markdown-docs/{SCRIPT_VERSION_NUMBER}/main.js <...input-files>
+deno run https://raw.githubusercontent.com/ivteplo/deno-markdown-docs/{SCRIPT_VERSION_NUMBER}/main.js <input-file> [...options]
 ```
 
 You can optionally specify an output file using `--output <output-file>` or

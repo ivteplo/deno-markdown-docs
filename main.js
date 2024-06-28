@@ -5,43 +5,48 @@
 //
 
 import { readJSDoc, path, yargs } from "./deps.js"
-import { DocumentationGenerator } from "./mod.js"
+import { version, DocumentationGenerator } from "./mod.js"
+
 
 export function parseArgs() {
-	const args = yargs(Deno.args)
-		.command("*", "generate documentation for a JavaScript file")
-		.positional("input-file", {
-			describe: "file to document",
-			demandOption: true,
-			type: "string"
-		})
+	const command = yargs(Deno.args)
+		.version(version)
+		.command(
+			"$0 <input-file>", "generate documentation for a JavaScript file",
+			yargs => yargs.positional("input-file", {
+				describe: "file to document",
+				demandOption: true,
+				type: "string"
+			}),
+			() => {}
+		)
 		.option("output", {
 			alias: "o",
 			type: "string",
 			description: "Output file path",
 			default: ""
 		})
-		.parse()
+		.strict()
+		.showHelpOnFail(true)
+
+	const args = command.parse()
 
 	return {
-		inputFiles: args._,
+		inputFile: args.inputFile,
 		outputFile: args.output
 	}
 }
 
-export async function main({ inputFiles, outputFile }) {
-	if (!inputFiles) {
+export async function main({ inputFile, outputFile }) {
+	if (!inputFile) {
 		console.error("No input file specified")
 		Deno.exit(1)
 	}
 
-	const documentationInJSON = (await Promise.all(
-		inputFiles
-			.map(inputFile => path.toFileUrl(path.resolve(inputFile)).toString())
-			.map(inputFileURLString => readJSDoc(inputFileURLString))
-	)).flat()
-
 	const generator = new DocumentationGenerator()
+
+	const inputFileUrlString = path.toFileUrl(path.resolve(inputFile)).toString()
+	const documentationInJSON = await readJSDoc(inputFileUrlString)
 
 	const documentationInMarkdown = documentationInJSON
 		.filter(generator.isObjectDocumentationToBeDisplayed)
