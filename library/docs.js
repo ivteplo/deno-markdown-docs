@@ -4,29 +4,7 @@
 // Licensed under the Apache license 2.0
 //
 
-import { doc as readJSDoc } from "https://deno.land/x/deno_doc@0.117.0/mod.ts"
-import * as path from "https://deno.land/std@0.207.0/path/mod.ts"
-
-async function main() {
-	const inputFile = Deno.args?.[0]
-
-	if (!inputFile) {
-		console.error("No input file specified")
-		Deno.exit(1)
-	}
-
-	const inputFileURLString = path.toFileUrl(path.resolve(inputFile)).toString()
-	const documentationInJSON = await readJSDoc(inputFileURLString)
-
-	const documentationInMarkdown = documentationInJSON
-		.filter(DocumentationGenerator.isObjectDocumentationToBeDisplayed)
-		.map(object => DocumentationGenerator.generate(object))
-		.join("\n\n\n\n") + "\n"
-
-	console.log(documentationInMarkdown)
-}
-
-class Markdown {
+export class Markdown {
 	/**
 	 * @param {string} name
 	 * @param {number} level
@@ -65,8 +43,12 @@ function join(items, separator = " ") {
 		.join(separator)
 }
 
-class DocumentationGenerator {
+export class DocumentationGenerator {
 	static generateFunctionArgumentDocumentation(argument, functionTags) {
+		if (argument.kind === "assign") {
+			return this.generateFunctionArgumentDocumentation(argument.left, functionTags) + ` = ${argument.right}`
+		}
+
 		let result = argument.name
 
 		if (argument.optional) {
@@ -96,8 +78,8 @@ class DocumentationGenerator {
 					name = `async ${name}`
 				}
 
-				name += "(" + object.functionDef.params.map(argument => this.generateFunctionArgumentDocumentation(argument, object.jsDoc.tags)) + ")"
-				name += ": " + (object.functionDef.returnType?.repr ?? object.jsDoc.tags.find(tag => tag.kind === "return")?.type ?? "unknown")
+				name += "(" + object.functionDef.params.map(argument => this.generateFunctionArgumentDocumentation(argument, object.jsDoc?.tags ?? [])).join(", ") + ")"
+				name += ": " + (object.functionDef.returnType?.repr ?? object.jsDoc?.tags.find(tag => tag.kind === "return")?.type ?? "unknown")
 				break
 		}
 
@@ -156,5 +138,3 @@ class DocumentationGenerator {
 		return object.name !== "default" && object.declarationKind === "export"
 	}
 }
-
-await main()

@@ -1,0 +1,5 @@
+{
+	"tasks": {
+		"docs": "deno run ./app/generateDocumentation.js mod.js"
+	}
+}
