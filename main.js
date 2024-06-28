@@ -4,10 +4,7 @@
 // Licensed under the Apache license 2.0
 //
 
-import { doc as readJSDoc } from "deno_doc"
-import * as path from "deno:path"
-import yargs from "yargs"
-
+import { readJSDoc, path, yargs } from "./deps.js"
 import { DocumentationGenerator } from "./mod.js"
 
 export function parseArgs() {
