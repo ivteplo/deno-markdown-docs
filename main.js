@@ -8,9 +8,9 @@ import { doc as readJSDoc } from "deno_doc"
 import * as path from "deno:path"
 import yargs from "yargs"
 
-import { DocumentationGenerator } from "../mod.js"
+import { DocumentationGenerator } from "./mod.js"
 
-function parseArgs() {
+export function parseArgs() {
 	const args = yargs(Deno.args)
 		.command("*", "generate documentation for a JavaScript file")
 		.positional("input-file", {
@@ -32,9 +32,7 @@ function parseArgs() {
 	}
 }
 
-async function main() {
-	const { inputFiles, outputFile } = parseArgs()
-
+export async function main({ inputFiles, outputFile }) {
 	if (!inputFiles) {
 		console.error("No input file specified")
 		Deno.exit(1)
@@ -66,4 +64,6 @@ async function main() {
 	}
 }
 
-main().catch(console.error)
+if (import.meta.main) {
+	main(parseArgs()).catch(console.error)
+}

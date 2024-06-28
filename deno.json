@@ -1,6 +1,6 @@
 {
 	"tasks": {
-		"docs": "deno run ./app/generateDocumentation.js mod.js"
+		"docs": "deno run main.js mod.js"
 	},
 	"imports": {
 		"deno_doc": "https://deno.land/x/deno_doc@0.117.0/mod.ts",
