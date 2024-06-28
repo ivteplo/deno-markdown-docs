@@ -9,9 +9,15 @@ import { join } from "./helpers.js"
 
 
 export class DocumentationGenerator {
-	static generateFunctionArgumentDocumentation(argument, functionTags) {
+	#outputFormat
+
+	constructor() {
+		this.#outputFormat = Markdown
+	}
+
+	#generateFunctionArgumentDocumentation(argument, functionTags) {
 		if (argument.kind === "assign") {
-			return this.generateFunctionArgumentDocumentation(argument.left, functionTags) + ` = ${argument.right}`
+			return this.#generateFunctionArgumentDocumentation(argument.left, functionTags) + ` = ${argument.right}`
 		}
 
 		let result = argument.name
@@ -30,7 +36,7 @@ export class DocumentationGenerator {
 		return result
 	}
 
-	static generateObjectName(object) {
+	#generateObjectName(object) {
 		let name = object.name
 
 		switch (object.kind) {
@@ -43,7 +49,7 @@ export class DocumentationGenerator {
 					name = `async ${name}`
 				}
 
-				name += "(" + object.functionDef.params.map(argument => this.generateFunctionArgumentDocumentation(argument, object.jsDoc?.tags ?? [])).join(", ") + ")"
+				name += "(" + object.functionDef.params.map(argument => this.#generateFunctionArgumentDocumentation(argument, object.jsDoc?.tags ?? [])).join(", ") + ")"
 				name += ": " + (object.functionDef.returnType?.repr ?? object.jsDoc?.tags.find(tag => tag.kind === "return")?.type ?? "unknown")
 				break
 		}
@@ -55,7 +61,7 @@ export class DocumentationGenerator {
 		return "`" + name + "`"
 	}
 
-	static generateTags(object) {
+	#generateTags(object) {
 		if (!object.jsDoc?.tags) {
 			object.jsDoc ??= {}
 			object.jsDoc.tags = []
@@ -67,15 +73,15 @@ export class DocumentationGenerator {
 
 		return object.jsDoc.tags.map(
 			tag => tag.kind === "example"
-				? this.generateExample(tag)
-				: Markdown.property(
+				? this.#generateExample(tag)
+				: this.#outputFormat.property(
 					join([tag.kind, tag.name], " "),
 					tag?.doc ?? tag?.type ?? ""
 				)
 		)
 	}
 
-	static generateExample(tag) {
+	#generateExample(tag) {
 		const summaryMatchGroup = /\<caption\>(([^\<\n]|<\/?i>|<\/?b>|<\/?u>|<\/?a>)*)\<\/caption\>/.exec(tag.doc)
 		const summaryString = summaryMatchGroup?.[1] ?? ""
 		const summaryCode = summaryString ? `<b>Example:</b> ${summaryString}` : "<b>Example</b>"
@@ -84,22 +90,22 @@ export class DocumentationGenerator {
 			.substring(summaryMatchGroup?.[0].length ?? 0)
 			.trim()
 
-		return Markdown.dropdown(summaryCode, "```jsx\n" + code + "\n```")
+		return this.#outputFormat.dropdown(summaryCode, "```jsx\n" + code + "\n```")
 	}
 
-	static generate(object, deepnessLevel = 1) {
+	generate(object, deepnessLevel = 1) {
 		return join([
 			join([
-				Markdown.title(this.generateObjectName(object), deepnessLevel),
+				this.#outputFormat.title(this.#generateObjectName(object), deepnessLevel),
 				object.jsDoc?.doc,
-				...this.generateTags(object),
+				...this.#generateTags(object),
 			], "\n\n"),
 			...(object.classDef?.properties.map(property => this.generate(property, deepnessLevel + 1)) ?? []),
 			...(object.classDef?.methods.map(method => this.generate(method, deepnessLevel + 1)) ?? []),
 		], "\n\n\n")
 	}
 
-	static isObjectDocumentationToBeDisplayed(object) {
+	isObjectDocumentationToBeDisplayed(object) {
 		return object.name !== "default" && object.declarationKind === "export"
 	}
 }

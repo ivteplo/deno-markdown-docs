@@ -46,9 +46,11 @@ async function main() {
 			.map(inputFileURLString => readJSDoc(inputFileURLString))
 	)).flat()
 
+	const generator = new DocumentationGenerator()
+
 	const documentationInMarkdown = documentationInJSON
-		.filter(DocumentationGenerator.isObjectDocumentationToBeDisplayed)
-		.map(object => DocumentationGenerator.generate(object))
+		.filter(generator.isObjectDocumentationToBeDisplayed)
+		.map(object => generator.generate(object))
 		.join("\n\n\n\n") + "\n"
 
 	if (outputFile === "") {
